@@ -342,7 +342,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
-  /* ─── FIREBASE CONFIG ─────────────────────────────────────────── */
   const firebaseConfig = {
     apiKey: "AIzaSyAsoKdy8uJumjzJ08jjsyhktnSh1shzFxc",
     authDomain: "registration-form-a19ea.firebaseapp.com",
@@ -356,18 +355,22 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  /* ─── CONFIGURATION ─────────────────────────────────────────── */
-  const MAX_SEATS  = 20;
-  const STORAGE_KEY = "reg_seats_v1";
-  const REG_DATA_KEY = "reg_data_v1";
-
-  /* ─── PERSIST SEAT COUNTS ───────────────────────────────────── */
-  function loadSeats() {
+  const MAX_SEATS = 20;
+  let seats = { morning: 0, evening: 0 };
+  
+  async function loadRegistrations() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return { morning: 0, evening: 0 };
+      const snapshot = await db.collection("registrations").get();
+      const regs = [];
+      snapshot.forEach(doc => {
+        regs.push({ id: doc.id, ...doc.data() });
+      });
+      seats = calculateSeatsFromRegs(regs);
+      return regs;
+    } catch(e) {
+      console.log("Firebase error:", e);
+      return [];
+    }
   }
   
   function calculateSeatsFromRegs(regs) {
@@ -381,52 +384,10 @@
     return counts;
   }
   
-  function saveSeats(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
-
-  let seats = loadSeats();
-  
-  async function initSeats() {
-    const regs = await loadRegistrations();
-    const regCounts = calculateSeatsFromRegs(regs);
-    if (regCounts.morning > 0 || regCounts.evening > 0) {
-      seats = regCounts;
-    }
-    updateUI();
-  }
-  initSeats();
-
-  /* ─── STORE REGISTRATIONS ───────────────────────────────────── */
-  async function loadRegistrations() {
-    try {
-      const snapshot = await db.collection("registrations").get();
-      const regs = [];
-      snapshot.forEach(doc => {
-        regs.push({ id: doc.id, ...doc.data() });
-      });
-      return regs;
-    } catch(e) {
-      console.log("Firebase error:", e);
-      try {
-        const raw = localStorage.getItem(REG_DATA_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch(e) {}
-      return [];
-    }
-  }
   async function saveRegistration(data) {
     const regData = { ...data, timestamp: new Date().toISOString() };
-    
-    db.collection("registrations").add(regData).then(() => {
-      console.log("Saved to Firebase");
-    }).catch(err => {
-      console.log("Firebase error:", err);
-    });
-    
-    const regs = await loadRegistrations();
-    regs.push(regData);
-    localStorage.setItem(REG_DATA_KEY, JSON.stringify(regs));
+    await db.collection("registrations").add(regData);
   }
-  async function getRegistrations() { return await loadRegistrations(); }
 
   /* ─── DOM REFS ──────────────────────────────────────────────── */
   const form           = document.getElementById("regForm");
@@ -534,15 +495,12 @@
     return ok ? session?.value : null;
   }
 
-  /* ─── SUBMIT ────────────────────────────────────────────────── */
   form.addEventListener("submit", async e => {
     e.preventDefault();
     const session = validate();
     if (!session) return;
 
-    // Refresh seat count from Firebase before submission
     const freshRegs = await loadRegistrations();
-    seats = calculateSeatsFromRegs(freshRegs);
     updateUI();
 
     if (MAX_SEATS - seats[session] <= 0) {
@@ -552,10 +510,6 @@
 
     submitBtn.disabled = true;
     submitBtn.textContent = "⏳ Submitting…";
-
-    const formData = new FormData(form);
-    formData.append("_subject", "New Registration - " + session);
-    formData.append("_gotcha", "");
 
     const regData = {
       fullName: document.getElementById("fullName").value.trim(),
@@ -570,9 +524,8 @@
       status: "Pending"
     };
 
-    seats[session]++;
-    saveSeats(seats);
-    saveRegistration(regData);
+    await saveRegistration(regData);
+    await loadRegistrations();
     updateUI();
 
     const mLeft = MAX_SEATS - seats.morning;
@@ -586,13 +539,7 @@
     }
   });
 
-  /* ─── INIT ──────────────────────────────────────────────────── */
-  updateUI();
-
-  /* ─── RESET SEATS ─────────────────────────────────────────────── *
-   * Open browser console (F12) and type:  resetSeats()          *
-   * This clears counts so you can test again.                     */
-  window.resetSeats = () => { localStorage.removeItem(STORAGE_KEY); location.reload(); };
+  loadRegistrations().then(updateUI);
 </script>
 
 </body>

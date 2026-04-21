@@ -280,7 +280,6 @@
 
   <div style="margin-top: 20px;">
     <button class="btn-export" onclick="exportToCSV()">📥 Export to CSV</button>
-    <button class="btn-export" onclick="resetSeats()" style="background:#ef4444;margin-left:10px;">🔄 Reset Seats</button>
     <button class="btn-export" onclick="checkSeats()" style="background:#6b7280;margin-left:10px;">👁 Check Seats</button>
   </div>
 </div>
@@ -288,7 +287,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
-  /* ─── FIREBASE CONFIG ─────────────────────────────────────────── */
   const firebaseConfig = {
     apiKey: "AIzaSyAsoKdy8uJumjzJ08jjsyhktnSh1shzFxc",
     authDomain: "registration-form-a19ea.firebaseapp.com",
@@ -302,7 +300,8 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  const REG_DATA_KEY = "reg_data_v1";
+  const MAX_SEATS = 20;
+  let cachedSeats = { morning: 0, evening: 0 };
 
   function isAdminLoggedIn() {
     return sessionStorage.getItem("adminLoggedIn") === "true";
@@ -319,39 +318,23 @@
       snapshot.forEach(doc => {
         regs.push({ id: doc.id, ...doc.data() });
       });
-      syncSeatsFromRegs(regs);
+      cachedSeats = calculateSeatsFromRegs(regs);
       return regs;
     } catch(e) {
       console.log("Error loading from Firebase:", e);
-      try {
-        const raw = localStorage.getItem(REG_DATA_KEY);
-        if (raw) {
-          const regs = JSON.parse(raw);
-          syncSeatsFromRegs(regs);
-          return regs;
-        }
-      } catch(e) {}
       return [];
     }
   }
 
-  function syncSeatsFromRegs(regs) {
-    const STORAGE_KEY = "reg_seats_v1";
-    const seats = { morning: 0, evening: 0 };
-    if (!regs) return;
+  function calculateSeatsFromRegs(regs) {
+    const counts = { morning: 0, evening: 0 };
+    if (!regs) return counts;
     regs.forEach(r => {
       if (r.status === "Pending" || r.status === "Verified") {
-        seats[r.session] = (seats[r.session] || 0) + 1;
+        counts[r.session] = (counts[r.session] || 0) + 1;
       }
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
-  }
-
-  async function saveRegistrations(regs) {
-    try {
-      const raw = JSON.stringify(regs);
-      localStorage.setItem(REG_DATA_KEY, raw);
-    } catch(e) {}
+    return counts;
   }
 
   let currentFilter = "all";
@@ -419,13 +402,11 @@
     if (index < 0 || index >= regs.length) return;
 
     const registration = regs[index];
-    registration.status = status;
     
     if (registration.id) {
       await db.collection("registrations").doc(registration.id).update({ status: status });
     }
     
-    await saveRegistrations(regs);
     renderTable();
     alert("Registration verified successfully!");
   }
@@ -435,46 +416,17 @@
     if (index < 0 || index >= regs.length) return;
 
     const registration = regs[index];
-    const session = registration.session;
-    
-    const STORAGE_KEY = "reg_seats_v1";
-    let seats = { morning: 0, evening: 0 };
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) seats = JSON.parse(raw);
-    } catch(e) {}
-    
-    if (seats[session] > 0) {
-      seats[session]--;
-    }
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
-    
-    registration.status = "Rejected";
     
     if (registration.id) {
       await db.collection("registrations").doc(registration.id).update({ status: "Rejected" });
     }
     
-    await saveRegistrations(regs);
     renderTable();
     alert("Registration rejected! Seat has been freed.");
   }
 
-  function resetSeats() {
-    localStorage.setItem("reg_seats_v1", JSON.stringify({ morning: 0, evening: 0 }));
-    alert("Seats reset! All sessions now have 20 seats available.");
-    renderTable();
-  }
-
   function checkSeats() {
-    try {
-      const raw = localStorage.getItem("reg_seats_v1");
-      const seats = raw ? JSON.parse(raw) : { morning: 0, evening: 0 };
-      alert(`Current seats:\nMorning taken: ${seats.morning} (${20 - seats.morning} left)\nEvening taken: ${seats.evening} (${20 - seats.evening} left)`);
-    } catch(e) {
-      alert("Error reading seats");
-    }
+    alert(`Current seats:\nMorning taken: ${cachedSeats.morning} (${MAX_SEATS - cachedSeats.morning} left)\nEvening taken: ${cachedSeats.evening} (${MAX_SEATS - cachedSeats.evening} left)`);
   }
 
   function logout() {
@@ -482,8 +434,8 @@
     window.location.href = "admin.html";
   }
 
-  function exportToCSV() {
-    const regs = loadRegistrations();
+  async function exportToCSV() {
+    const regs = await loadRegistrations();
     if (regs.length === 0) {
       alert("No registrations to export.");
       return;
