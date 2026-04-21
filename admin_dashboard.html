@@ -319,15 +319,32 @@
       snapshot.forEach(doc => {
         regs.push({ id: doc.id, ...doc.data() });
       });
+      syncSeatsFromRegs(regs);
       return regs;
     } catch(e) {
       console.log("Error loading from Firebase:", e);
       try {
         const raw = localStorage.getItem(REG_DATA_KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const regs = JSON.parse(raw);
+          syncSeatsFromRegs(regs);
+          return regs;
+        }
       } catch(e) {}
       return [];
     }
+  }
+
+  function syncSeatsFromRegs(regs) {
+    const STORAGE_KEY = "reg_seats_v1";
+    const seats = { morning: 0, evening: 0 };
+    if (!regs) return;
+    regs.forEach(r => {
+      if (r.status === "Pending" || r.status === "Verified") {
+        seats[r.session] = (seats[r.session] || 0) + 1;
+      }
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
   }
 
   async function saveRegistrations(regs) {
@@ -427,8 +444,9 @@
       if (raw) seats = JSON.parse(raw);
     } catch(e) {}
     
-    seats[session] = (seats[session] || 0) - 1;
-    if (seats[session] < 0) seats[session] = 0;
+    if (seats[session] > 0) {
+      seats[session]--;
+    }
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
     
