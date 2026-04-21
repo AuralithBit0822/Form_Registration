@@ -368,9 +368,9 @@
     return { morning: 0, evening: 0 };
   }
   
-  function calculateSeatsFromRegs() {
-    const regs = loadRegistrations();
+  function calculateSeatsFromRegs(regs) {
     const counts = { morning: 0, evening: 0 };
+    if (!regs) return counts;
     regs.forEach(r => {
       if (r.status === "Pending" || r.status === "Verified") {
         counts[r.session] = (counts[r.session] || 0) + 1;
@@ -383,18 +383,33 @@
 
   let seats = loadSeats();
   
-  const regCounts = calculateSeatsFromRegs();
-  if (regCounts.morning > 0 || regCounts.evening > 0) {
-    seats = regCounts;
+  async function initSeats() {
+    const regs = await loadRegistrations();
+    const regCounts = calculateSeatsFromRegs(regs);
+    if (regCounts.morning > 0 || regCounts.evening > 0) {
+      seats = regCounts;
+    }
+    updateUI();
   }
+  initSeats();
 
   /* ─── STORE REGISTRATIONS ───────────────────────────────────── */
-  function loadRegistrations() {
+  async function loadRegistrations() {
     try {
-      const raw = localStorage.getItem(REG_DATA_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return [];
+      const snapshot = await db.collection("registrations").get();
+      const regs = [];
+      snapshot.forEach(doc => {
+        regs.push({ id: doc.id, ...doc.data() });
+      });
+      return regs;
+    } catch(e) {
+      console.log("Firebase error:", e);
+      try {
+        const raw = localStorage.getItem(REG_DATA_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return [];
+    }
   }
   function saveRegistration(data) {
     const regData = { ...data, timestamp: new Date().toISOString() };
