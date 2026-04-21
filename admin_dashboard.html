@@ -285,7 +285,23 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
+  /* ─── FIREBASE CONFIG ─────────────────────────────────────────── */
+  const firebaseConfig = {
+    apiKey: "AIzaSyAsoKdy8uJumjzJ08jjsyhktnSh1shzFxc",
+    authDomain: "registration-form-a19ea.firebaseapp.com",
+    projectId: "registration-form-a19ea",
+    storageBucket: "registration-form-a19ea.firebasestorage.app",
+    messagingSenderId: "404605364560",
+    appId: "1:404605364560:web:34f1bc4e29d98f24482455",
+    measurementId: "G-L7M2V5L490"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
   const REG_DATA_KEY = "reg_data_v1";
 
   function isAdminLoggedIn() {
@@ -296,16 +312,29 @@
     window.location.href = "admin.html";
   }
 
-  function loadRegistrations() {
+  async function loadRegistrations() {
     try {
-      const raw = localStorage.getItem(REG_DATA_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return [];
+      const snapshot = await db.collection("registrations").get();
+      const regs = [];
+      snapshot.forEach(doc => {
+        regs.push({ id: doc.id, ...doc.data() });
+      });
+      return regs;
+    } catch(e) {
+      console.log("Error loading from Firebase:", e);
+      try {
+        const raw = localStorage.getItem(REG_DATA_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return [];
+    }
   }
 
-  function saveRegistrations(regs) {
-    localStorage.setItem(REG_DATA_KEY, JSON.stringify(regs));
+  async function saveRegistrations(regs) {
+    try {
+      const raw = JSON.stringify(regs);
+      localStorage.setItem(REG_DATA_KEY, raw);
+    } catch(e) {}
   }
 
   let currentFilter = "all";
@@ -319,8 +348,8 @@
     renderTable();
   }
 
-  function renderTable() {
-    const regs = loadRegistrations();
+  async function renderTable() {
+    const regs = await loadRegistrations();
     const filtered = currentFilter === "all" 
       ? regs 
       : regs.filter(r => r.status === currentFilter);
@@ -368,19 +397,24 @@
     `).join("");
   }
 
-  function verifyReg(index, status) {
-    const regs = loadRegistrations();
+  async function verifyReg(index, status) {
+    const regs = await loadRegistrations();
     if (index < 0 || index >= regs.length) return;
 
     const registration = regs[index];
     registration.status = status;
-    saveRegistrations(regs);
+    
+    if (registration.id) {
+      await db.collection("registrations").doc(registration.id).update({ status: status });
+    }
+    
+    await saveRegistrations(regs);
     renderTable();
     alert("Registration verified successfully!");
   }
 
-  function rejectReg(index) {
-    const regs = loadRegistrations();
+  async function rejectReg(index) {
+    const regs = await loadRegistrations();
     if (index < 0 || index >= regs.length) return;
 
     const registration = regs[index];
@@ -399,7 +433,12 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
     
     registration.status = "Rejected";
-    saveRegistrations(regs);
+    
+    if (registration.id) {
+      await db.collection("registrations").doc(registration.id).update({ status: "Rejected" });
+    }
+    
+    await saveRegistrations(regs);
     renderTable();
     alert("Registration rejected! Seat has been freed.");
   }
@@ -459,7 +498,7 @@
     link.click();
   }
 
-  document.addEventListener("DOMContentLoaded", renderTable);
+  document.addEventListener("DOMContentLoaded", () => renderTable());
 </script>
 
 </body>
