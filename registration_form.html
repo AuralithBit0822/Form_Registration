@@ -91,7 +91,7 @@
       transition: all 0.2s;
       position: relative;
     }
-    .radio-card input[type="radio"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+    .radio-card input[type="radio"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; z-index: 1; }
     .radio-card .label-top { font-weight: 700; font-size: 1rem; color: #374151; }
     .radio-card .label-sub { font-size: 0.78rem; color: #6b7280; margin-top: 3px; }
     .radio-card .seats-left {
@@ -101,7 +101,7 @@
     }
     .radio-card.available .seats-left  { background: #dcfce7; color: #16a34a; }
     .radio-card.full-session .seats-left { background: #fee2e2; color: #dc2626; }
-    .radio-card.selected     { border-color: #667eea; background: #f0f2ff; }
+    .radio-card.selected, .radio-card:has(input:checked) { border-color: #667eea; background: #f0f2ff; }
     .radio-card.disabled-card { opacity: 0.55; cursor: not-allowed; background: #f3f4f6; }
 
     .payment-box {
@@ -116,7 +116,7 @@
     .upi-id {
       font-weight: 700; font-size: 1rem; color: #1e40af;
       background: #dbeafe; padding: 4px 10px;
-      border-radius: 6px; display: inline-block;
+      border-radius: 6px; display: block; width: fit-content;
       margin: 6px 0; letter-spacing: 0.5px;
     }
 
@@ -129,11 +129,12 @@
       transition: border-color 0.2s;
       background: #f9fafb;
       position: relative;
+      overflow: hidden;
     }
     .upload-area:hover { border-color: #667eea; }
     .upload-area input[type="file"] {
       position: absolute; inset: 0; opacity: 0;
-      cursor: pointer; width: 100%; height: 100%;
+      cursor: pointer; width: 100%; height: 100%; z-index: 1;
     }
     .upload-area .icon { font-size: 2rem; margin-bottom: 6px; }
     .upload-area p { font-size: 0.85rem; color: #6b7280; }
@@ -265,8 +266,9 @@
     <div class="payment-box">
       <h4>💳 Payment Instructions</h4>
       <p>Scan the QR code below using your banking app to pay Rs. 500</p>
-      <div class="upi-id"></div>
-      <img src="bank_qr.png" alt="Bank QR Code" style="max-width:200px;margin:12px 0;border-radius:8px;border:1px solid #ddd;" />
+      <div class="upi-id">auralithbit@auralith</div>
+      <img src="./bank_qr.png" alt="Bank QR Code" style="max-width:200px;margin:12px 0;border-radius:8px;border:1px solid #ddd;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+      <p id="qr-placeholder" style="display:none;color:#6b7280;font-size:0.85rem;">QR code not available. Pay Rs. 500 to auralithbit@auralith and upload the screenshot.</p>
       <p style="margin-top:8px;">Amount: <strong>Rs. 500</strong> &nbsp;|&nbsp; Reference: Your Full Name</p>
     </div>
 
