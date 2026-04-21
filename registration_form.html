@@ -91,7 +91,7 @@
       transition: all 0.2s;
       position: relative;
     }
-    .radio-card input[type="radio"] { position: absolute; opacity: 0; width: 0; }
+    .radio-card input[type="radio"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
     .radio-card .label-top { font-weight: 700; font-size: 1rem; color: #374151; }
     .radio-card .label-sub { font-size: 0.78rem; color: #6b7280; margin-top: 3px; }
     .radio-card .seats-left {
@@ -535,7 +535,7 @@
   }
 
   /* ─── SUBMIT ────────────────────────────────────────────────── */
-  form.addEventListener("submit", e => {
+  form.addEventListener("submit", async e => {
     e.preventDefault();
     const session = validate();
     if (!session) return;
