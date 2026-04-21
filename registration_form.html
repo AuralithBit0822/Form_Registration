@@ -540,6 +540,11 @@
     const session = validate();
     if (!session) return;
 
+    // Refresh seat count from Firebase before submission
+    const freshRegs = await loadRegistrations();
+    seats = calculateSeatsFromRegs(freshRegs);
+    updateUI();
+
     if (MAX_SEATS - seats[session] <= 0) {
       alert(`Sorry — the ${session} session is now full. Please select the other session.`);
       return;
