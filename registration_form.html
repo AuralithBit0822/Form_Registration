@@ -413,22 +413,20 @@
       return [];
     }
   }
-  function saveRegistration(data) {
+  async function saveRegistration(data) {
     const regData = { ...data, timestamp: new Date().toISOString() };
     
-    // Save to Firebase
     db.collection("registrations").add(regData).then(() => {
       console.log("Saved to Firebase");
     }).catch(err => {
       console.log("Firebase error:", err);
     });
     
-    // Also save locally
-    const regs = loadRegistrations();
+    const regs = await loadRegistrations();
     regs.push(regData);
     localStorage.setItem(REG_DATA_KEY, JSON.stringify(regs));
   }
-  function getRegistrations() { return loadRegistrations(); }
+  async function getRegistrations() { return await loadRegistrations(); }
 
   /* ─── DOM REFS ──────────────────────────────────────────────── */
   const form           = document.getElementById("regForm");
