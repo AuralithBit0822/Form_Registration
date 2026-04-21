@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Registration System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+    }
+
+    .login-container h1 {
+      font-size: 1.6rem;
+      color: #1e3a5f;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .login-container p {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #d1d5db;
+      border-radius: 9px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #2d5a87;
+    }
+
+    .error-msg {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .error-msg.show { display: block; }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .login-btn:hover { opacity: 0.9; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .back-link:hover { color: #2d5a87; }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <h1>🔐 Admin Login</h1>
+  <p>Enter your admin credentials to access the dashboard</p>
+  
+  <form id="loginForm">
+    <div class="form-group">
+      <label>Admin Username</label>
+      <input type="text" id="username" placeholder="Enter admin username" />
+    </div>
+    
+    <div class="form-group">
+      <label>Admin Password</label>
+      <input type="password" id="password" placeholder="Enter admin password" />
+      <div class="error-msg" id="loginError">Invalid username or password</div>
+    </div>
+    
+    <button type="submit" class="login-btn">Login</button>
+  </form>
+  
+  <a href="registration_form.html" class="back-link">← Back to Registration Form</a>
+</div>
+
+<script>
+  const ADMIN_CREDENTIALS = {
+    username: "admin",
+    password: "admin123"
+  };
+
+  document.getElementById("loginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const errorMsg = document.getElementById("loginError");
+    
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      sessionStorage.setItem("adminLoggedIn", "true");
+      window.location.href = "admin_dashboard.html";
+    } else {
+      errorMsg.classList.add("show");
+      document.getElementById("password").value = "";
+    }
+  });
+</script>
+
+</body>
+</html>

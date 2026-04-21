@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard - Registration System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 { font-size: 1.4rem; }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      padding: 20px 30px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      flex: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .stat-card h3 {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e3a5f;
+    }
+
+    .stat-card.pending .number { color: #f59e0b; }
+    .stat-card.verified .number { color: #10b981; }
+    .stat-card.rejected .number { color: #ef4444; }
+
+    .dashboard {
+      padding: 30px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      border: 2px solid #e5e7eb;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #6b7280;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover { border-color: #2d5a87; color: #2d5a87; }
+    
+    .filter-btn.active {
+      background: #1e3a5f;
+      border-color: #1e3a5f;
+      color: white;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #f9fafb;
+      padding: 16px;
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    tr:hover { background: #f9fafb; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-badge.pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge.verified {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .status-badge.rejected {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .action-btn:hover { opacity: 0.85; }
+
+    .btn-verify {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-reject {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-export {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 50px;
+      color: #6b7280;
+    }
+
+    .refresh-btn {
+      background: #6b7280;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 900px) {
+      .table-container { overflow-x: auto; }
+      table { min-width: 900px; }
+      .stats-bar { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Admin Dashboard</h1>
+  <div class="header-right">
+    <span id="adminName">Welcome, Admin</span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-card pending">
+    <h3>Pending</h3>
+    <div class="number" id="statPending">0</div>
+  </div>
+  <div class="stat-card verified">
+    <h3>Verified</h3>
+    <div class="number" id="statVerified">0</div>
+  </div>
+  <div class="stat-card rejected">
+    <h3>Rejected</h3>
+    <div class="number" id="statRejected">0</div>
+  </div>
+  <div class="stat-card">
+    <h3>Total</h3>
+    <div class="number" id="statTotal">0</div>
+  </div>
+</div>
+
+<div class="dashboard">
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterRegistrations('all')" data-filter="all">All</button>
+    <button class="filter-btn" onclick="filterRegistrations('Pending')" data-filter="Pending">Pending</button>
+    <button class="filter-btn" onclick="filterRegistrations('Verified')" data-filter="Verified">Verified</button>
+    <button class="filter-btn" onclick="filterRegistrations('Rejected')" data-filter="Rejected">Rejected</button>
+    <button class="refresh-btn" onclick="renderTable()">Refresh</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Faculty</th>
+          <th>College</th>
+          <th>Session</th>
+          <th>Payment Method</th>
+          <th>Reference</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button class="btn-export" onclick="exportToCSV()">📥 Export to CSV</button>
+    <button class="btn-export" onclick="resetSeats()" style="background:#ef4444;margin-left:10px;">🔄 Reset Seats</button>
+    <button class="btn-export" onclick="checkSeats()" style="background:#6b7280;margin-left:10px;">👁 Check Seats</button>
+  </div>
+</div>
+
+<script>
+  const REG_DATA_KEY = "reg_data_v1";
+
+  function isAdminLoggedIn() {
+    return sessionStorage.getItem("adminLoggedIn") === "true";
+  }
+
+  if (!isAdminLoggedIn()) {
+    window.location.href = "admin.html";
+  }
+
+  function loadRegistrations() {
+    try {
+      const raw = localStorage.getItem(REG_DATA_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return [];
+  }
+
+  function saveRegistrations(regs) {
+    localStorage.setItem(REG_DATA_KEY, JSON.stringify(regs));
+  }
+
+  let currentFilter = "all";
+
+  function filterRegistrations(status) {
+    currentFilter = status;
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.classList.remove("active");
+      if (btn.dataset.filter === status) btn.classList.add("active");
+    });
+    renderTable();
+  }
+
+  function renderTable() {
+    const regs = loadRegistrations();
+    const filtered = currentFilter === "all" 
+      ? regs 
+      : regs.filter(r => r.status === currentFilter);
+
+    let pending = 0, verified = 0, rejected = 0;
+    regs.forEach(r => {
+      if (r.status === "Pending") pending++;
+      else if (r.status === "Verified") verified++;
+      else if (r.status === "Rejected") rejected++;
+    });
+
+    document.getElementById("statPending").textContent = pending;
+    document.getElementById("statVerified").textContent = verified;
+    document.getElementById("statRejected").textContent = rejected;
+    document.getElementById("statTotal").textContent = regs.length;
+
+    const tbody = document.getElementById("tableBody");
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="12" class="no-data">No registrations found</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><strong>${r.fullName}</strong></td>
+        <td>${r.email}</td>
+        <td>${r.phone}</td>
+        <td>${r.faculty || '-'}</td>
+        <td>${r.college || '-'}</td>
+        <td style="text-transform: capitalize;">${r.session}</td>
+        <td>${r.paymentMethod || '-'}</td>
+        <td>${r.txnId}</td>
+        <td>${new Date(r.timestamp).toLocaleString()}</td>
+        <td><span class="status-badge ${r.status.toLowerCase()}">${r.status}</span></td>
+        <td class="action-btns">
+          ${r.status === "Pending" ? `
+            <button class="action-btn btn-verify" onclick="verifyReg(${regs.indexOf(r)}, 'Verified')">✓ Verify</button>
+            <button class="action-btn btn-reject" onclick="rejectReg(${regs.indexOf(r)})">✗ Reject</button>
+          ` : r.status === "Verified" ? `
+            <button class="action-btn btn-reject" onclick="rejectReg(${regs.indexOf(r)})">✗ Reject</button>
+          ` : '<span style="color:#9ca3af;font-size:0.8rem;">-</span>'}
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function verifyReg(index, status) {
+    const regs = loadRegistrations();
+    if (index < 0 || index >= regs.length) return;
+
+    const registration = regs[index];
+    registration.status = status;
+    saveRegistrations(regs);
+    renderTable();
+    alert("Registration verified successfully!");
+  }
+
+  function rejectReg(index) {
+    const regs = loadRegistrations();
+    if (index < 0 || index >= regs.length) return;
+
+    const registration = regs[index];
+    const session = registration.session;
+    
+    const STORAGE_KEY = "reg_seats_v1";
+    let seats = { morning: 0, evening: 0 };
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) seats = JSON.parse(raw);
+    } catch(e) {}
+    
+    seats[session] = (seats[session] || 0) - 1;
+    if (seats[session] < 0) seats[session] = 0;
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seats));
+    
+    registration.status = "Rejected";
+    saveRegistrations(regs);
+    renderTable();
+    alert("Registration rejected! Seat has been freed.");
+  }
+
+  function resetSeats() {
+    localStorage.setItem("reg_seats_v1", JSON.stringify({ morning: 0, evening: 0 }));
+    alert("Seats reset! All sessions now have 20 seats available.");
+    renderTable();
+  }
+
+  function checkSeats() {
+    try {
+      const raw = localStorage.getItem("reg_seats_v1");
+      const seats = raw ? JSON.parse(raw) : { morning: 0, evening: 0 };
+      alert(`Current seats:\nMorning taken: ${seats.morning} (${20 - seats.morning} left)\nEvening taken: ${seats.evening} (${20 - seats.evening} left)`);
+    } catch(e) {
+      alert("Error reading seats");
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem("adminLoggedIn");
+    window.location.href = "admin.html";
+  }
+
+  function exportToCSV() {
+    const regs = loadRegistrations();
+    if (regs.length === 0) {
+      alert("No registrations to export.");
+      return;
+    }
+    
+    const headers = ["#", "Full Name", "Email", "Phone", "Faculty", "College", "Session", "Payment Method", "Reference", "Status", "Date"];
+    const rows = regs.map((r, i) => [
+      i + 1,
+      r.fullName,
+      r.email,
+      r.phone,
+      r.faculty || '-',
+      r.college || '-',
+      r.session,
+      r.paymentMethod || '-',
+      r.txnId,
+      r.status,
+      new Date(r.timestamp).toLocaleString()
+    ]);
+    
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(","))
+      .join("\n");
+    
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `registrations_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  }
+
+  document.addEventListener("DOMContentLoaded", renderTable);
+</script>
+
+</body>
+</html>

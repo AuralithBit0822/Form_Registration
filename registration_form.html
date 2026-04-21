@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seat Registration Form</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 600px;
+      overflow: hidden;
+    }
+
+    .form-header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 32px 36px 24px;
+    }
+    .form-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 6px; }
+    .form-header p  { font-size: 0.95rem; opacity: 0.88; }
+
+    .seat-badges { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+    .seat-badge {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .seat-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+    .seat-badge.full .dot { background: #f87171; }
+
+    form { padding: 32px 36px; }
+    .form-group { margin-bottom: 22px; }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+    label span.required { color: #ef4444; margin-left: 3px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 9px;
+      font-size: 0.95rem;
+      color: #111827;
+      background: #f9fafb;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+      background: #fff;
+    }
+
+    .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .radio-card {
+      flex: 1;
+      min-width: 130px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .radio-card input[type="radio"] { position: absolute; opacity: 0; width: 0; }
+    .radio-card .label-top { font-weight: 700; font-size: 1rem; color: #374151; }
+    .radio-card .label-sub { font-size: 0.78rem; color: #6b7280; margin-top: 3px; }
+    .radio-card .seats-left {
+      font-size: 0.76rem; font-weight: 600;
+      margin-top: 6px; padding: 2px 8px;
+      border-radius: 50px; display: inline-block;
+    }
+    .radio-card.available .seats-left  { background: #dcfce7; color: #16a34a; }
+    .radio-card.full-session .seats-left { background: #fee2e2; color: #dc2626; }
+    .radio-card.selected     { border-color: #667eea; background: #f0f2ff; }
+    .radio-card.disabled-card { opacity: 0.55; cursor: not-allowed; background: #f3f4f6; }
+
+    .payment-box {
+      background: #f0f9ff;
+      border: 1.5px solid #bae6fd;
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 22px;
+    }
+    .payment-box h4 { font-size: 0.9rem; font-weight: 700; color: #0369a1; margin-bottom: 10px; }
+    .payment-box p  { font-size: 0.83rem; color: #374151; line-height: 1.6; }
+    .upi-id {
+      font-weight: 700; font-size: 1rem; color: #1e40af;
+      background: #dbeafe; padding: 4px 10px;
+      border-radius: 6px; display: inline-block;
+      margin: 6px 0; letter-spacing: 0.5px;
+    }
+
+    .upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      background: #f9fafb;
+      position: relative;
+    }
+    .upload-area:hover { border-color: #667eea; }
+    .upload-area input[type="file"] {
+      position: absolute; inset: 0; opacity: 0;
+      cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-area .icon { font-size: 2rem; margin-bottom: 6px; }
+    .upload-area p { font-size: 0.85rem; color: #6b7280; }
+    .upload-area .file-name { font-size: 0.82rem; color: #667eea; font-weight: 600; margin-top: 6px; }
+
+    .checkbox-group { display: flex; align-items: flex-start; gap: 10px; }
+    .checkbox-group input[type="checkbox"] {
+      margin-top: 3px; accent-color: #667eea;
+      width: 16px; height: 16px; flex-shrink: 0; cursor: pointer;
+    }
+    .checkbox-group label { font-size: 0.85rem; color: #374151; cursor: pointer; font-weight: 400; }
+
+    .submit-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s; margin-top: 8px;
+    }
+    .submit-btn:hover    { opacity: 0.92; transform: translateY(-1px); }
+    .submit-btn:active   { transform: translateY(0); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .closed-overlay, .success-overlay {
+      display: none; padding: 60px 36px; text-align: center;
+    }
+    .closed-overlay .icon,
+    .success-overlay .icon { font-size: 4rem; margin-bottom: 16px; }
+    .closed-overlay h2 { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 10px; }
+    .success-overlay h2 { font-size: 1.5rem; font-weight: 700; color: #16a34a; margin-bottom: 10px; }
+    .closed-overlay p,
+    .success-overlay p { font-size: 0.95rem; color: #6b7280; line-height: 1.7; }
+
+    .error-msg { font-size: 0.8rem; color: #ef4444; margin-top: 5px; display: none; }
+
+
+
+    @media (max-width: 480px) {
+      form, .form-header { padding: 24px 20px; }
+      .radio-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="form-header" id="formHeader">
+    <h1>🎓 Session Registration</h1>
+    <p>Register for your preferred session slot. Limited seats available!</p>
+    <div class="seat-badges">
+      <div class="seat-badge" id="badge-morning">
+        <span class="dot"></span>
+        Morning: <span id="badge-m-count">20</span> seats left
+      </div>
+      <div class="seat-badge" id="badge-evening">
+        <span class="dot"></span>
+        Evening: <span id="badge-e-count">20</span> seats left
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <form id="regForm" action="https://formspree.io/f/info@auralithbit.com.np" method="POST" novalidate enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label>Full Name <span class="required">*</span></label>
+      <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" />
+      <div class="error-msg" id="err-name">Please enter your full name.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Email Address <span class="required">*</span></label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" />
+      <div class="error-msg" id="err-email">Please enter a valid email address.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Phone Number <span class="required">*</span></label>
+      <input type="tel" id="phone" name="phone" placeholder="+977 98XXXXXXXX" />
+      <div class="error-msg" id="err-phone">Please enter a valid phone number.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Faculty <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-card available" for="bsc-csit">
+          <input type="radio" name="faculty" id="bsc-csit" value="BSC.CSIT" />
+          <div class="label-top">BSC.CSIT</div>
+        </label>
+        <label class="radio-card available" for="bca">
+          <input type="radio" name="faculty" id="bca" value="BCA" />
+          <div class="label-top">BCA</div>
+        </label>
+        <label class="radio-card available" for="bit">
+          <input type="radio" name="faculty" id="bit" value="BIT" />
+          <div class="label-top">BIT</div>
+        </label>
+      </div>
+      <div class="error-msg" id="err-faculty">Please select a faculty.</div>
+    </div>
+
+    <div class="form-group">
+      <label>College Name <span class="required">*</span></label>
+      <input type="text" id="college" name="college" placeholder="Enter your college name" />
+      <div class="error-msg" id="err-college">Please enter your college name.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Select Session <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-card available" id="card-morning" for="morning">
+          <input type="radio" name="session" id="morning" value="morning" />
+          <div class="label-top">🌅 Morning</div>
+          <div class="label-sub">8:30 AM – 10:30 AM</div>
+          <span class="seats-left" id="seats-morning">20 seats left</span>
+        </label>
+        <label class="radio-card available" id="card-evening" for="evening">
+          <input type="radio" name="session" id="evening" value="evening" />
+          <div class="label-top">🌆 Evening</div>
+          <div class="label-sub">4:00 PM – 6:00 PM</div>
+          <span class="seats-left" id="seats-evening">20 seats left</span>
+        </label>
+      </div>
+      <div class="error-msg" id="err-session">Please select a session.</div>
+    </div>
+
+    <div class="payment-box">
+      <h4>💳 Payment Instructions</h4>
+      <p>Scan the QR code below using your banking app to pay Rs. 500</p>
+      <div class="upi-id"></div>
+      <img src="bank_qr.png" alt="Bank QR Code" style="max-width:200px;margin:12px 0;border-radius:8px;border:1px solid #ddd;" />
+      <p style="margin-top:8px;">Amount: <strong>Rs. 500</strong> &nbsp;|&nbsp; Reference: Your Full Name</p>
+    </div>
+
+    <div class="form-group">
+      <label>Payment Method <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-card available" for="esewa">
+          <input type="radio" name="paymentMethod" id="esewa" value="eSewa" />
+          <div class="label-top">📱 eSewa</div>
+        </label>
+        <label class="radio-card available" for="khalti">
+          <input type="radio" name="paymentMethod" id="khalti" value="Khalti" />
+          <div class="label-top">💳 Khalti</div>
+        </label>
+        <label class="radio-card available" for="bank">
+          <input type="radio" name="paymentMethod" id="bank" value="Bank Transfer" />
+          <div class="label-top">🏦 Bank Transfer</div>
+        </label>
+      </div>
+      <div class="error-msg" id="err-paymentMethod">Please select a payment method.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Payment Screenshot <span class="required">*</span></label>
+      <div class="upload-area">
+        <input type="file" id="paymentProof" name="paymentProof" accept="image/*,.pdf" />
+        <div class="icon">📎</div>
+        <p>Click or drag & drop your payment screenshot</p>
+        <p style="margin-top:4px;font-size:0.78rem;">Supports JPG, PNG, PDF</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <div class="error-msg" id="err-proof">Please upload your payment screenshot.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Reference <span class="required">*</span></label>
+      <input type="text" id="txnId" name="txnId" placeholder="e.g. Your full name" />
+      <div class="error-msg" id="err-txn">Please enter a reference.</div>
+    </div>
+
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="agree" name="agree" />
+        <label for="agree">I confirm that the payment has been made and all information provided is accurate.</label>
+      </div>
+      <div class="error-msg" id="err-agree">Please confirm the declaration.</div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">✅ Submit Registration</button>
+  </form>
+
+  <!-- SUCCESS -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="icon">🎉</div>
+    <h2>Registration Successful!</h2>
+    <p>Thank you! Your seat has been confirmed.<br/>You will receive a confirmation shortly.</p>
+  </div>
+
+  <!-- CLOSED -->
+  <div class="closed-overlay" id="closedOverlay">
+    <div class="icon">🔒</div>
+    <h2>Registrations Closed</h2>
+    <p>All 20 seats for both <strong>Morning</strong> and <strong>Evening</strong> sessions are now full.<br/>
+       We're sorry — no more registrations are being accepted.</p>
+  </div>
+
+</div>
+
+  
+
+<script>
+  /* ─── CONFIGURATION ─────────────────────────────────────────── */
+  const MAX_SEATS  = 20;
+  const STORAGE_KEY = "reg_seats_v1";
+  const REG_DATA_KEY = "reg_data_v1";
+
+  /* ─── PERSIST SEAT COUNTS ───────────────────────────────────── */
+  function loadSeats() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return { morning: 0, evening: 0 };
+  }
+  
+  function calculateSeatsFromRegs() {
+    const regs = loadRegistrations();
+    const counts = { morning: 0, evening: 0 };
+    regs.forEach(r => {
+      if (r.status === "Pending" || r.status === "Verified") {
+        counts[r.session] = (counts[r.session] || 0) + 1;
+      }
+    });
+    return counts;
+  }
+  
+  function saveSeats(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+  let seats = loadSeats();
+  
+  const regCounts = calculateSeatsFromRegs();
+  if (regCounts.morning > 0 || regCounts.evening > 0) {
+    seats = regCounts;
+  }
+
+  /* ─── STORE REGISTRATIONS ───────────────────────────────────── */
+  function loadRegistrations() {
+    try {
+      const raw = localStorage.getItem(REG_DATA_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return [];
+  }
+  function saveRegistration(data) {
+    const regs = loadRegistrations();
+    regs.push({ ...data, timestamp: new Date().toISOString() });
+    localStorage.setItem(REG_DATA_KEY, JSON.stringify(regs));
+  }
+  function getRegistrations() { return loadRegistrations(); }
+
+  /* ─── DOM REFS ──────────────────────────────────────────────── */
+  const form           = document.getElementById("regForm");
+  const successOverlay = document.getElementById("successOverlay");
+  const closedOverlay  = document.getElementById("closedOverlay");
+  const formHeader     = document.getElementById("formHeader");
+  const cardMorning    = document.getElementById("card-morning");
+  const cardEvening    = document.getElementById("card-evening");
+  const seatsMorning   = document.getElementById("seats-morning");
+  const seatsEvening   = document.getElementById("seats-evening");
+  const badgeM         = document.getElementById("badge-morning");
+  const badgeE         = document.getElementById("badge-evening");
+  const badgeMCount    = document.getElementById("badge-m-count");
+  const badgeECount    = document.getElementById("badge-e-count");
+  const submitBtn      = document.getElementById("submitBtn");
+  const fileInput      = document.getElementById("paymentProof");
+  const fileName       = document.getElementById("fileName");
+
+  /* ─── UPDATE SEAT UI ────────────────────────────────────────── */
+  function updateUI() {
+    const mLeft = MAX_SEATS - seats.morning;
+    const eLeft = MAX_SEATS - seats.evening;
+
+    seatsMorning.textContent = mLeft > 0 ? `${mLeft} seat${mLeft!==1?'s':''} left` : "FULL";
+    seatsEvening.textContent = eLeft > 0 ? `${eLeft} seat${eLeft!==1?'s':''} left` : "FULL";
+    badgeMCount.textContent  = mLeft;
+    badgeECount.textContent  = eLeft;
+
+    if (mLeft <= 0) {
+      cardMorning.classList.replace("available", "full-session");
+      cardMorning.classList.add("disabled-card");
+      document.getElementById("morning").disabled = true;
+      badgeM.classList.add("full");
+    }
+    if (eLeft <= 0) {
+      cardEvening.classList.replace("available", "full-session");
+      cardEvening.classList.add("disabled-card");
+      document.getElementById("evening").disabled = true;
+      badgeE.classList.add("full");
+    }
+
+    /* Auto-close when BOTH sessions are full */
+    if (mLeft <= 0 && eLeft <= 0) showClosed();
+  }
+
+  function showClosed() {
+    form.style.display        = "none";
+    successOverlay.style.display = "none";
+    formHeader.style.display  = "none";
+    closedOverlay.style.display  = "block";
+  }
+
+  /* ─── FILE LABEL ────────────────────────────────────────────── */
+  fileInput.addEventListener("change", () => {
+    fileName.textContent = fileInput.files[0] ? fileInput.files[0].name : "";
+  });
+
+  /* ─── RADIO CARD HIGHLIGHT ──────────────────────────────────── */
+  document.querySelectorAll('input[name="session"], input[name="faculty"], input[name="paymentMethod"]').forEach(r => {
+    r.addEventListener("change", () => {
+      document.querySelectorAll(".radio-card").forEach(c => c.classList.remove("selected"));
+      if (r.checked) r.closest(".radio-card").classList.add("selected");
+    });
+  });
+
+  /* ─── VALIDATION ────────────────────────────────────────────── */
+  function showErr(id, show) {
+    document.getElementById(id).style.display = show ? "block" : "none";
+  }
+
+  function validate() {
+    let ok = true;
+
+    const name = document.getElementById("fullName").value.trim();
+    showErr("err-name", !name); if (!name) ok = false;
+
+    const email = document.getElementById("email").value.trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    showErr("err-email", !emailOk); if (!emailOk) ok = false;
+
+    const phone = document.getElementById("phone").value.trim();
+    showErr("err-phone", phone.length < 7); if (phone.length < 7) ok = false;
+
+    const faculty = document.querySelector('input[name="faculty"]:checked');
+    showErr("err-faculty", !faculty); if (!faculty) ok = false;
+
+    const college = document.getElementById("college").value.trim();
+    showErr("err-college", !college); if (!college) ok = false;
+
+    const session = document.querySelector('input[name="session"]:checked');
+    showErr("err-session", !session); if (!session) ok = false;
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+    showErr("err-paymentMethod", !paymentMethod); if (!paymentMethod) ok = false;
+
+    const proof = fileInput.files.length > 0;
+    showErr("err-proof", !proof); if (!proof) ok = false;
+
+    const txn = document.getElementById("txnId").value.trim();
+    showErr("err-txn", !txn); if (!txn) ok = false;
+
+    const agree = document.getElementById("agree").checked;
+    showErr("err-agree", !agree); if (!agree) ok = false;
+
+    return ok ? session?.value : null;
+  }
+
+  /* ─── SUBMIT ────────────────────────────────────────────────── */
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const session = validate();
+    if (!session) return;
+
+    if (MAX_SEATS - seats[session] <= 0) {
+      alert(`Sorry — the ${session} session is now full. Please select the other session.`);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "⏳ Submitting…";
+
+    const formData = new FormData(form);
+    formData.append("_subject", "New Registration - " + session);
+    formData.append("_gotcha", "");
+
+    const regData = {
+      fullName: document.getElementById("fullName").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      faculty: document.querySelector('input[name="faculty"]:checked')?.value,
+      college: document.getElementById("college").value.trim(),
+      session: session,
+      paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value,
+      txnId: document.getElementById("txnId").value.trim(),
+      paymentProof: fileInput.files[0]?.name || "No file",
+      status: "Pending"
+    };
+
+    seats[session]++;
+    saveSeats(seats);
+    saveRegistration(regData);
+    updateUI();
+
+    const mLeft = MAX_SEATS - seats.morning;
+    const eLeft = MAX_SEATS - seats.evening;
+
+    if (mLeft <= 0 && eLeft <= 0) {
+      showClosed();
+    } else {
+      form.style.display        = "none";
+      successOverlay.style.display = "block";
+    }
+  });
+
+  /* ─── INIT ──────────────────────────────────────────────────── */
+  updateUI();
+
+  /* ─── RESET SEATS ─────────────────────────────────────────────── *
+   * Open browser console (F12) and type:  resetSeats()          *
+   * This clears counts so you can test again.                     */
+  window.resetSeats = () => { localStorage.removeItem(STORAGE_KEY); location.reload(); };
+</script>
+
+</body>
+</html>
